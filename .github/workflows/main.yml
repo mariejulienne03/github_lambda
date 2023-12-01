@@ -1,44 +1,50 @@
-name: Deploy Python Lambda
+#AUTOMATISATION DU PROCESSUS DE DÉPLOIEMENT DE L'APPLICATION
+# fonctionnement : 
+# - déclenché par un push sur la branche "main"
+# - prend en charge la configuration des environnements python et nodeJS + tests 
+# - prend en charge le dpéloiement via le framework serverless
 
+
+name: Deploy Python Lambda
+#1- DÉCLENCHEUR
 on:
   push:
     branches:
       - main
-
+#2- JOB `DEPLOY`
 jobs:
   deploy:
     name: deploy
     runs-on: ubuntu-latest
     env:
-      NODE_VERSION: 14.x # used for installing the serverless-python-requirements dependency from NPM
+      NODE_VERSION: 14.x 
     strategy:
       matrix:
         python-version:
-          - 3.8 # with a build matrix, you can specify a list of python versions to deploy with
+          - 3.8
+    #2 a- étapes du job
     steps:
-      # --------- use Python to install Python dependencies and run linter, tests, etc. ---------
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
+      - uses: actions/checkout@v2 #récupération du code source du dépôt GitHub
+      - name: Set up Python ${{ matrix.python-version }} #configuration de Python avec la version spécifiée
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Cache pip
+      - name: Cache pip # utilisation d'un cache pour les dépendances pip
         uses: actions/cache@v2
         with:
-          # This path is specific to Ubuntu
           path: ~/.cache/pip
           # Look to see if there is a cache hit for the corresponding requirements file
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
-      - name: Install dependencies
+      - name: Install dependencies #installation des dépendances python nécessaires
         run: |
           python -m pip install --upgrade pip
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Lint with flake8
+      - name: Lint with flake8 #vérification de la qualité du code python avec flaxe8
         run: |
           # stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -46,12 +52,12 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       # --------- Use Node and NPM to install serverless-python-requirements ---------
-      - name: Use Node.js ${{ env.NODE_VERSION }}
+      - name: Use Node.js ${{ env.NODE_VERSION }} #installation de l'environnement nodeJS 
         uses: actions/setup-node@v1
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Cache node modules
+      - name: Cache node modules #utilisation d'un cache des modules nodes JS
         uses: actions/cache@v2
         env:
           cache-name: cache-node-modules
@@ -63,13 +69,11 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-      - name: Install Node dependencies (specifically, serverless-python-requirements)
+      - name: Install Node dependencies #(specifically, serverless-python-requirements)
         run: npm install
 
-      - name: Serverless Deploy
+      - name: Serverless Deploy #étape finale: déploiement serverless en utilisant une action GitHub 
         uses: dhollerbach/github-action-serverless-with-python-requirements@master
-        env:
-          # SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
-          # or if using AWS credentials directly
+        env: # authentification AWS lors du déploiement
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}

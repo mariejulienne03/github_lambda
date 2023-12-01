@@ -1,3 +1,7 @@
+#FICHIER qui définit la configuration du déploiement vers Lambda 
+#fonctionnement: 
+# - sépcifie les détails de la fonction lambda (taille mémoire, temps exécution maximum, déclencheurs d'évènements)
+# - prend en compte les configurations pour les dépendances, les rôles IAM et autres paramètres AWS
 service: basic-serverless-lambda-python
 
 provider:

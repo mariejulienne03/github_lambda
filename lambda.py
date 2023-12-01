@@ -1,12 +1,11 @@
-import requests
+# Fichier : lambda.py
 
 def handler(event, context):
-    response = requests.get("https://jsonplaceholder.typicode.com/todos/1")
-    res = {
-        "event": event,
-        "output" : response.json(),
-        "context" : context
-    }
-    print(res)
+    print("Événement reçu :", event)
+    print("Contexte :", context)
 
-    return None
+    # Une réponse simple
+    return {
+        'statusCode': 200,
+        'body': 'Hello from Lambda!'
+    }
